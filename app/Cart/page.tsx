@@ -11,7 +11,13 @@ const Cart = () => {
   useEffect(() => {
     const savedCart = localStorage.getItem("cart");
     if (savedCart) {
-      setProducts(JSON.parse(savedCart));
+      const cartProducts = JSON.parse(savedCart);
+      // Ensure each product has a valid 'total' when the cart is loaded
+      const updatedProducts = cartProducts.map((product: any) => ({
+        ...product,
+        total: product.price * product.quantity, // Calculate total if it's not set
+      }));
+      setProducts(updatedProducts);
     }
   }, []);
 
@@ -29,7 +35,8 @@ const Cart = () => {
     localStorage.setItem("cart", JSON.stringify(updatedProducts)); // Save to localStorage
   };
 
-  const cartSubtotal = products.reduce((sum, product) => sum + product.total, 0);
+  // Ensure cartSubtotal and totalAmount use valid numbers
+  const cartSubtotal = products.reduce((sum, product) => sum + (product.total || 0), 0);
   const shippingCharge = 0;
   const totalAmount = cartSubtotal + shippingCharge;
 
@@ -102,7 +109,7 @@ const Cart = () => {
                         +
                       </button>
                     </td>
-                    <td className="py-2 px-4">${product.total.toFixed(2)}</td>
+                    <td className="py-2 px-4">${(product.total || 0).toFixed(2)}</td>
                     <td className="py-2 px-4 text-red-400 cursor-pointer" onClick={() => removeItem(index)}>
                       <FaTimes />
                     </td>

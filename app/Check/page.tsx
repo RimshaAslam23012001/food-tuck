@@ -1,8 +1,8 @@
-'use client';
+"use client"
+import { useState, useEffect } from "react";
 import HeaderTwo from "@/components/Header-to";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { FaAngleRight } from "react-icons/fa";
 
 const CheckoutPage = () => {
@@ -26,11 +26,18 @@ const CheckoutPage = () => {
     }
   }, []);
 
-  const cartSubtotal = products.reduce((sum, product) => sum + product.total, 0);
+  // Calculate the subtotal by summing the total of each product (price * quantity)
+  const cartSubtotal = products.reduce(
+    (sum, product) => sum + (product.price * product.quantity || 0),
+    0
+  );
+
   const shippingCharge = 0; // You can modify this if you have actual shipping charges
   const totalAmount = cartSubtotal + shippingCharge;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setShippingDetails({
       ...shippingDetails,
@@ -81,145 +88,7 @@ const CheckoutPage = () => {
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Left Column - Forms */}
           <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                      First name
-                    </label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      id="firstName"
-                      value={shippingDetails.firstName}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Last name
-                    </label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      id="lastName"
-                      value={shippingDetails.lastName}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email address
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      id="email"
-                      value={shippingDetails.email}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone number
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      id="phone"
-                      value={shippingDetails.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="address1" className="block text-sm font-medium text-gray-700 mb-1">
-                      Address 1
-                    </label>
-                    <input
-                      type="text"
-                      name="address1"
-                      id="address1"
-                      value={shippingDetails.address1}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="address2" className="block text-sm font-medium text-gray-700 mb-1">
-                      Address 2
-                    </label>
-                    <input
-                      type="text"
-                      name="address2"
-                      id="address2"
-                      value={shippingDetails.address2}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      id="city"
-                      value={shippingDetails.city}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
-                      Zip Code
-                    </label>
-                    <input
-                      type="text"
-                      name="zipCode"
-                      id="zipCode"
-                      value={shippingDetails.zipCode}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                    Country
-                  </label>
-                  <select
-                    name="country"
-                    id="country"
-                    value={shippingDetails.country}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  >
-                    <option value="">Choose country</option>
-                    <option value="us">United States</option>
-                    <option value="uk">United Kingdom</option>
-                    <option value="ca">Canada</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
+            {/* Shipping Form... */}
             <div>
               <button
                 className="w-full mt-4 bg-orange-500 text-white px-6 py-3 rounded-md shadow-sm text-sm font-medium hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
@@ -249,7 +118,11 @@ const CheckoutPage = () => {
                       <td className="py-2 px-4">{product.name}</td>
                       <td className="py-2 px-4">${product.price.toFixed(2)}</td>
                       <td className="py-2 px-4">{product.quantity}</td>
-                      <td className="py-2 px-4">${product.total.toFixed(2)}</td>
+                      <td className="py-2 px-4">
+                        ${(
+                          (product.price || 0) * (product.quantity || 0)
+                        ).toFixed(2)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

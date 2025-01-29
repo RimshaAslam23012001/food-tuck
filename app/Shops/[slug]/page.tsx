@@ -1,116 +1,102 @@
-"use client";
+'use client';
+import { useState, useEffect } from "react";
 import HeaderTwo from "@/components/Header-to";
 import Link from "next/link";
-import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import {
-  FaAngleRight,
-  FaExchangeAlt,
-  FaFacebook,
-  FaHeart,
-  FaInstagram,
-  FaTwitter,
-} from "react-icons/fa";
+import { FaAngleRight, FaExchangeAlt, FaFacebook, FaHeart, FaInstagram, FaTwitter } from "react-icons/fa";
 import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 
-
+// Type for the cart item
+type CartItem = {
+  name: string;
+  price: number;
+  quantity: number;
+};
 
 const ShopDetails = ({ params: { slug } }: { params: { slug: string } }) => {
-  const [response, setResponse] = useState<any | string>();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [quantity, setQuantity] = useState(1);
+  const [response, setResponse] = useState<any>(null); // State for the fetched data
+  const [quantity, setQuantity] = useState(1); // State to manage the item quantity
+  const [cart, setCart] = useState<CartItem[]>([]); // State for the cart
 
-  // Fetch data on component mount
+  // Fetch product details from Sanity
   useEffect(() => {
-    const fetchResponse = async () => {
-      try {
-        // Query to fetch product by slug
-        const query = `*[_type == "food" && slug.current == '${slug}' ]{
-          name,
-          image,
-          rating,
-          reviews,
-          category,
-          price,
-          description
-        }[0]`;
-        const data = await client.fetch(query);
-        
+    const fetchProduct = async () => {
+      const query = `*[_type == "food" && slug.current == '${slug}' ]{
+        name,
+        image,
+        rating,
+        reviews,
+        category,
+        price,
+        description
+      }[0]`;
 
-        // Check if data exists and is an array, then set the response
-        if (data && data.length > 0) {
-          setResponse(data[0]);
-        } else {
-          console.error("Food item not found!");
-        }
-      } catch (error) {
-        console.error("Error fetching product data:", error);
-      } finally {
-        setLoading(false); // Turn off loading once data is fetched
-      }
+      const data = await client.fetch(query);
+      setResponse(data);
     };
 
-    fetchResponse();
-  }, [slug]); // Effect runs when slug changes
-console.log("response",response)
+    fetchProduct();
+  }, [slug]); // Dependency array to refetch on slug change
 
+  // Load cart from localStorage on initial load
+  useEffect(() => {
+    const savedCart = localStorage.getItem("cart");
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
+  }, []);
 
-  // Early return for loading state
-  if (loading) {
-    return <div>Loading...</div>; // Display loading while data is being fetched
-  }
+  // Save cart to localStorage whenever the cart changes
+  useEffect(() => {
+    if (cart.length > 0) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+  }, [cart]);
 
-  // Early return if no response is available
-  if (!response) {
-    return <div>No product data found.</div>;
-  }
-
-  // Handle quantity changes
-  const decreaseQuantity = () => {
-    if (quantity > 1) setQuantity(quantity - 1);
-  };
-
+  // Increase the quantity of the item
   const increaseQuantity = () => {
-    setQuantity(quantity + 1);
+    setQuantity((prev) => prev + 1);
   };
 
-  // Add item to cart
+  // Decrease the quantity of the item
+  const decreaseQuantity = () => {
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  };
+
+  // Add the item to the cart
   const addToCart = () => {
-    if (!response) return; // Ensure that there is product data
+    if (!response) return;
 
     const newItem = {
-      ...response,
+      name: response.name,
+      price: response.price,
       quantity,
-      total: response.price * quantity, // Calculate total price
     };
 
-    // Retrieve current cart from localStorage
-    const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+    // Check if the item already exists in the cart
+    const existingItemIndex = cart.findIndex((item) => item.name === response.name);
 
-    // Check if the product already exists in the cart
-    const existingItemIndex = savedCart.findIndex(
-      (item: any) => item.slug === response.slug
-    );
-
-    if (existingItemIndex !== -1) {
-      // Update existing item in the cart
-      savedCart[existingItemIndex].quantity += quantity;
-      savedCart[existingItemIndex].total =
-        savedCart[existingItemIndex].price *
-        savedCart[existingItemIndex].quantity;
+    if (existingItemIndex >= 0) {
+      // If item exists, update the quantity
+      const updatedCart = [...cart];
+      updatedCart[existingItemIndex].quantity += quantity;
+      setCart(updatedCart);
     } else {
-      // Add new item to cart
-      savedCart.push(newItem);
+      // If item doesn't exist, add a new one
+      setCart((prevCart) => [...prevCart, newItem]); // Add new item to the cart
     }
 
-    // Store updated cart in localStorage
-    localStorage.setItem("cart", JSON.stringify(savedCart));
-
-    alert(`${response.name} has been added to the cart!`); // Confirmation message
+    // Show alert when item is added to the cart
+    alert(`${response.name} has been added to your cart.`);
   };
 
-  const totalPrice = response.price * quantity; // Calculate total price safely
+  if (!response) {
+    return <div>Loading...</div>; // Add loading state until data is fetched
+  }
+
+  // Calculate the total price dynamically
+  const totalPrice = response.price * quantity;
 
   return (
     <div>
@@ -149,7 +135,7 @@ console.log("response",response)
             <div className="md:flex-1 relative order-1 md:order-2 flex justify-center">
               <div className="relative w-[380px] h-[350px]">
                 <Image
-                  src={response.image ? urlFor(response.image).url() : ""}
+                  src={urlFor(response.image).url()}
                   alt={response.name}
                   width={380}
                   height={350}
@@ -170,7 +156,7 @@ console.log("response",response)
               <span className="text-gray-700">{response.reviews} Reviews</span>
             </div>
             <h2 className="text-3xl font-bold text-orange-500 mb-6">
-              ${totalPrice.toFixed(2)}
+              ${totalPrice.toFixed(2)} {/* Display total price dynamically */}
             </h2>
             <p className="text-gray-600 mb-8">{response.description}</p>
 
