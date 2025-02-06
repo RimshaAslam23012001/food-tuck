@@ -1,10 +1,10 @@
-"use client"; 
+"use client";
 import { useState, useEffect } from "react";
 import HeaderTwo from "@/components/Header-to";
 import Image from "next/image";
 import Link from "next/link";
 import { FaAngleRight } from "react-icons/fa";
-
+import { client } from "@/sanity/lib/client"; // Ensure this is the correct path
 
 const CheckoutPage = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -18,6 +18,15 @@ const CheckoutPage = () => {
     zipCode: "",
   });
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [formErrors, setFormErrors] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    phone: false,
+    address1: false,
+    city: false,
+    zipCode: false,
+  });
 
   useEffect(() => {
     const savedCart = localStorage.getItem("cart");
@@ -31,7 +40,7 @@ const CheckoutPage = () => {
     0
   );
 
-  const shippingCharge = 0; // Set this to your shipping charge if needed
+  const shippingCharge = 0;
   const totalAmount = cartSubtotal + shippingCharge;
 
   const handleInputChange = (
@@ -44,19 +53,79 @@ const CheckoutPage = () => {
     });
   };
 
-  const handleCheckoutSubmit = () => {
-    // Proceed with the order submission without involving schema or Sanity
-    // Here, you can handle the order creation locally or send it to an external API.
-
-    console.log("Order details:", {
-      shippingDetails,
-      products,
-      totalAmount,
-    });
-
-    setOrderSuccess(true);
-    localStorage.removeItem("cart"); // Clear cart after placing the order
+  const validateForm = () => {
+    const errors = {
+      firstName: !shippingDetails.firstName,
+      lastName: !shippingDetails.lastName,
+      email: !shippingDetails.email || !/\S+@\S+\.\S+/.test(shippingDetails.email),
+      phone: !shippingDetails.phone || !/^\d{10}$/.test(shippingDetails.phone),
+      address1: !shippingDetails.address1,
+      city: !shippingDetails.city,
+      zipCode: !shippingDetails.zipCode,
+    };
+    setFormErrors(errors);
+    return Object.values(errors).every((error) => !error);
   };
+
+  const submitOrderToSanity = async (order: any) => {
+    try {
+      const response = await client.create({
+        _type: 'order',
+        firstName: order.firstName,
+        lastName: order.lastName,
+        email: order.email,
+        phone: order.phone,
+        address: order.address,
+        city: order.city,
+        zipCode: order.zipCode,
+        orderItems: order.orderItems,
+        total: order.total,
+        status: order.status,
+      });
+      console.log("Order created successfully:", response);
+      setOrderSuccess(true);
+    } catch (error) {
+      console.error("Error creating order:", error);
+      alert("There was an issue placing your order. Please try again.");
+    }
+  };
+
+  const handleCheckoutSubmit = () => {
+    if (validateForm()) {
+      const order = {
+        firstName: shippingDetails.firstName,
+        lastName: shippingDetails.lastName,
+        email: shippingDetails.email,
+        phone: shippingDetails.phone,
+        address: shippingDetails.address1,
+        city: shippingDetails.city,
+        zipcode: shippingDetails.zipCode,
+        orderItems: products.map((product) => ({
+          _type: 'reference',
+          _ref: product.id,
+        })),
+        total: totalAmount,
+        status: 'pending',
+      };
+
+      submitOrderToSanity(order);
+
+      localStorage.removeItem("cart");
+
+      setShippingDetails({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        address1: "",
+        city: "",
+        zipCode: "",
+      });
+    } else {
+      alert("Please fill out all fields correctly.");
+    }
+  };
+
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -114,6 +183,9 @@ const CheckoutPage = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
+                    {formErrors.firstName && (
+                      <p className="text-red-500 text-sm">First name is required</p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -130,6 +202,9 @@ const CheckoutPage = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
+                    {formErrors.lastName && (
+                      <p className="text-red-500 text-sm">Last name is required</p>
+                    )}
                   </div>
                 </div>
 
@@ -149,6 +224,11 @@ const CheckoutPage = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
+                    {formErrors.email && (
+                      <p className="text-red-500 text-sm">
+                        Please enter a valid email
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -165,6 +245,11 @@ const CheckoutPage = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
+                    {formErrors.phone && (
+                      <p className="text-red-500 text-sm">
+                        Phone number should be 11 digits
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -184,6 +269,9 @@ const CheckoutPage = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
+                    {formErrors.city && (
+                      <p className="text-red-500 text-sm">City is required</p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -200,12 +288,15 @@ const CheckoutPage = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
+                    {formErrors.zipCode && (
+                      <p className="text-red-500 text-sm">Zip code is required</p>
+                    )}
                   </div>
                 </div>
 
                 <div>
                   <label
-                    htmlFor="address"
+                    htmlFor="address1"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Address
@@ -218,15 +309,18 @@ const CheckoutPage = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
+                  {formErrors.address1 && (
+                    <p className="text-red-500 text-sm">Address is required</p>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:justify-between gap-4 pt-4">
               <Link href={"/Cart"}>
-              <button className="py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 w-full sm:w-auto h-12 px-3">
-                Back to cart
-              </button>
+                <button className="py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 w-full sm:w-auto h-12 px-3">
+                  Back to cart
+                </button>
               </Link>
 
               <button
@@ -235,50 +329,34 @@ const CheckoutPage = () => {
               >
                 Proceed to Shipping
               </button>
+              {orderSuccess && <p className="text-green-500 mt-4">Order placed successfully!</p>}
             </div>
           </div>
 
           {/* Right Column - Order Summary */}
-          <div className="space-y-6">
+          <div>
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-            <div className="border rounded-lg shadow-md p-4 overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b text-sm sm:text-base">
-                    <th className="py-2 px-4">Product</th>
-                    <th className="py-2 px-4">Price</th>
-                    <th className="py-2 px-4">Quantity</th>
-                    <th className="py-2 px-4">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product, index) => (
-                    <tr key={index} className="border-b text-sm sm:text-base">
-                      <td className="py-2 px-4">{product.name}</td>
-                      <td className="py-2 px-4">${product.price.toFixed(2)}</td>
-                      <td className="py-2 px-4">{product.quantity}</td>
-                      <td className="py-2 px-4">
-                        ${((product.price || 0) * (product.quantity || 0)).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Total Amount */}
-              <div className="mt-4">
-                <div className="flex justify-between">
-                  <span className="text-lg font-medium">Subtotal</span>
-                  <span className="text-lg">${cartSubtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between mt-2">
-                  <span className="text-lg font-medium">Shipping</span>
-                  <span className="text-lg">${shippingCharge.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between mt-4 text-xl font-bold">
-                  <span>Total Amount</span>
-                  <span>${totalAmount.toFixed(2)}</span>
-                </div>
+            <div className="border rounded-lg p-4">
+              <div className="space-y-2">
+                {products.map((product) => (
+                  <div key={product.id} className="flex justify-between">
+                    <p className="text-sm">{product.name}</p>
+                    <p className="text-sm">${product.price * product.quantity}</p>
+                  </div>
+                ))}
+              </div>
+              <hr className="my-4" />
+              <div className="flex justify-between">
+                <p className="font-semibold">Subtotal</p>
+                <p className="font-semibold">${cartSubtotal}</p>
+              </div>
+              <div className="flex justify-between">
+                <p className="font-semibold">Shipping</p>
+                <p className="font-semibold">${shippingCharge}</p>
+              </div>
+              <div className="flex justify-between">
+                <p className="text-lg font-semibold">Total</p>
+                <p className="text-lg font-semibold">${totalAmount}</p>
               </div>
             </div>
           </div>

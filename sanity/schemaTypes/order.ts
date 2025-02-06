@@ -1,4 +1,4 @@
-export default {
+const orderSchema = {
     name: 'order',
     type: 'document',
     title: 'Order',
@@ -44,8 +44,8 @@ export default {
             title: 'Order Items',
             of: [
                 {
-                    type: 'reference', // This defines the reference type
-                    to: [{ type: 'food' }] // Ensure this matches the name of your 'product' schema
+                    type: 'reference', // Reference to 'food' schema
+                    to: [{ type: 'food' }]
                 }
             ],
             description: 'Items ordered by the customer'
@@ -69,7 +69,35 @@ export default {
                 ],
                 layout: 'radio'
             },
-            initialValue: 'pending' // Corrected typo here
+            initialValue: 'pending'
+        },
+        {
+            name: 'orderDate',
+            type: 'datetime',
+            title: 'Order Date',
+            description: 'Date when the order was placed'
+        },
+        {
+            name: 'paymentStatus',
+            type: 'string',
+            title: 'Payment Status',
+            options: {
+                list: [
+                    { title: 'Paid', value: 'paid' },
+                    { title: 'Unpaid', value: 'unpaid' },
+                    { title: 'Pending', value: 'pending' }
+                ],
+                layout: 'radio'
+            },
+            initialValue: 'unpaid'
+        },
+        {
+            name: 'orderNotes',
+            type: 'text',
+            title: 'Order Notes',
+            description: 'Any special instructions for the order'
         }
     ]
 };
+
+export default orderSchema;
