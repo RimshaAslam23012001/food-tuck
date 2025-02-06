@@ -1,25 +1,48 @@
-'use client';
+"use client"; 
+import { useState, useEffect } from "react";
 import HeaderTwo from "@/components/Header-to";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { FaAngleRight, FaTimes } from "react-icons/fa";
+import { useAuth } from '@clerk/clerk-react';
+import { useRouter } from 'next/navigation';
 
 const Cart = () => {
+  const { isSignedIn } = useAuth(); // Clerk auth hook
   const [products, setProducts] = useState<any[]>([]);
+  const [isClient, setIsClient] = useState(false); // State to handle router loading
+  const router = useRouter(); // Next.js router hook
 
+  // Initialize the router only on the client side
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      const cartProducts = JSON.parse(savedCart);
-      // Ensure each product has a valid 'total' when the cart is loaded
-      const updatedProducts = cartProducts.map((product: any) => ({
-        ...product,
-        total: product.price * product.quantity, // Calculate total if it's not set
-      }));
-      setProducts(updatedProducts);
-    }
+    setIsClient(true);
   }, []);
+
+  // Proceed to checkout function that uses router
+  const handleProceedToCheckout = () => {
+    if (!isSignedIn) {
+      // Redirect to sign-in page if not signed in
+      router.push('/Signin');  // Ensure '/signin' is the route where your sign-in page is
+    } else {
+      // Proceed to checkout if signed in
+      router.push('/Check');
+    }
+  };
+
+  // Load products from localStorage once the component is mounted
+  useEffect(() => {
+    if (isClient) {
+      const savedCart = localStorage.getItem("cart");
+      if (savedCart) {
+        const cartProducts = JSON.parse(savedCart);
+        const updatedProducts = cartProducts.map((product: any) => ({
+          ...product,
+          total: product.price * product.quantity, // Calculate total if it's not set
+        }));
+        setProducts(updatedProducts);
+      }
+    }
+  }, [isClient]); // Add `isClient` dependency to ensure this runs after client-side load
 
   const updateQuantity = (index: number, quantity: number) => {
     const updatedProducts = [...products];
@@ -35,10 +58,11 @@ const Cart = () => {
     localStorage.setItem("cart", JSON.stringify(updatedProducts)); // Save to localStorage
   };
 
-  // Ensure cartSubtotal and totalAmount use valid numbers
   const cartSubtotal = products.reduce((sum, product) => sum + (product.total || 0), 0);
   const shippingCharge = 0;
   const totalAmount = cartSubtotal + shippingCharge;
+
+  if (!isClient) return null; // Prevent rendering SSR content
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -148,11 +172,12 @@ const Cart = () => {
                 <span>${totalAmount.toFixed(2)}</span>
               </div>
             </div>
-            <Link href={"/Check"}>
-              <button className="mt-4 bg-orange-500 text-white px-4 py-2 rounded w-full">
-                Proceed to Checkout
-              </button>
-            </Link>
+            <button
+              onClick={handleProceedToCheckout}
+              className="mt-4 bg-orange-500 text-white px-4 py-2 rounded w-full"
+            >
+              Proceed to Checkout
+            </button>
           </div>
         </div>
       </div>

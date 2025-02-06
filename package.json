@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-     "import-data": "node scripts\\import-data.mjs"
+    "import-data": "node scripts\\import-data.mjs"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.11.0",
     "@radix-ui/react-dialog": "^1.1.4",
     "@sanity/client": "^6.25.0",
     "@sanity/image-url": "^1.1.0",

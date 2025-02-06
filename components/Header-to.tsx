@@ -40,7 +40,7 @@ function HeaderTwo() {
               <Link href="/">Home</Link>
             </li>
             <li>
-              <Link href="/Menu">Menu</Link>
+              <Link href="/M-menu">Menu</Link>
             </li>
             <li>
               <Link href="/Blog">Blog</Link>

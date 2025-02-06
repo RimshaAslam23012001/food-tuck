@@ -14,8 +14,9 @@ const ActiveProcess = () => {
         <Image
           src={"/images/doc.png"}
           alt="Image"
-          layout="fill"
-          objectFit="cover"
+          height="300"
+          width="300"
+          className="w-full h-auto object-cover"
         />
         <div className="text-white absolute inset-0 flex flex-col justify-center items-center md:items-end w-full px-4 sm:px-8 lg:px-12 text-center md:text-right">
           <div className="w-full md:w-[705px] md:max-w-full">

@@ -1,18 +1,18 @@
-import Link from "next/link";
-import { FcGoogle } from "react-icons/fc";
-import { ImAppleinc } from "react-icons/im";
-import HeaderTwo from "@/components/Header-to";
-import { FaAngleRight } from "react-icons/fa";
-import Image from "next/image";
+// File: pages/Signin/page.tsx
 
+import HeaderTwo from "@/components/Header-to";
+import { SignIn } from "@clerk/nextjs";
+import Image from "next/image";
+import Link from "next/link";
+import { FaAngleRight } from "react-icons/fa";
 
 export default function SignInPage() {
   return (
-    <div>
     <div className="min-h-screen bg-white">
       <HeaderTwo />
-        {/* Hero Image */}
-        <div className="relative">
+      
+      {/* Hero Image */}
+      <div className="relative">
         <Image
           src={"/images/heropic.png"}
           alt="pic"
@@ -36,7 +36,7 @@ export default function SignInPage() {
             </li>
             <li>
               <Link href={"/Signin"} className="text-orange-500">
-               Sign In
+                Sign In
               </Link>
             </li>
           </ul>
@@ -44,56 +44,16 @@ export default function SignInPage() {
       </div>
 
       {/* Signin Form */}
-      <section className="py-16">
-        <div className="container mx-auto max-w-md bg-white shadow-lg rounded-md p-8">
-          <h3 className="text-2xl font-bold mb-6 text-center">Sign In</h3>
-          <form>
-          
-            <div className="mb-4">
-              <label className="block mb-2 font-medium">Email</label>
-              <input
-                type="email"
-                className="w-full border rounded px-3 py-2 focus:ring focus:ring-yellow-300"
-                placeholder="Enter your email"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block mb-2 font-medium">Password</label>
-              <input
-                type="password"
-                className="w-full border rounded px-3 py-2 focus:ring focus:ring-yellow-300"
-                placeholder="Enter your password"
-              />
-            </div>
-            <div className="flex items-center mb-4">
-              <input type="checkbox" className="mr-2" />
-              <span>Remember me?</span>
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 rounded"
-            >
-              Sign In
-            </button>
-            <p className="text-center mt-4">
-              <Link href="/Pages" className="text-yellow-500">Forgot password?</Link>
-            </p>
-          </form>
-          <div className="text-center mt-8">
-            <p>or</p>
-            <button className="w-full bg-gray-100 border text-black py-2 rounded mt-2 flex items-center justify-center">
-            <FcGoogle className="h-6 mr-2" />
-              Sign in with Google
-            </button>
-            <button className="w-full bg-gray-100 border text-black py-2 rounded mt-2 flex items-center justify-center">
-              <ImAppleinc className="h-6 mr-2" />
-              Sign in with Apple
-            </button>
-          </div>
+      <section className="py-16 flex justify-center items-center">
+        <div className="w-full max-w-md px-4">
+        <SignIn
+            path="/signin" // Path of the SignIn page
+            routing="path" // The routing type
+            signUpUrl="/Signout" // This is the Sign Up page URL to redirect
+          />
         </div>
       </section>
 
     </div>
-    </div>
-    );
+  );
 }
