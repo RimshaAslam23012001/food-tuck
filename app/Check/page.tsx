@@ -8,7 +8,7 @@ import { client } from "@/sanity/lib/client"; // Ensure this is the correct path
 
 const CheckoutPage = () => {
   const [products, setProducts] = useState<any[]>([]);
-  const [shippingDetails, setShippingDetails] = useState({
+  const [formValues, setFormValues] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -17,7 +17,7 @@ const CheckoutPage = () => {
     city: "",
     zipCode: "",
   });
-  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState<null | boolean>(null);
   const [formErrors, setFormErrors] = useState({
     firstName: false,
     lastName: false,
@@ -47,21 +47,21 @@ const CheckoutPage = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setShippingDetails({
-      ...shippingDetails,
+    setFormValues({
+      ...formValues,
       [name]: value,
     });
   };
 
   const validateForm = () => {
     const errors = {
-      firstName: !shippingDetails.firstName,
-      lastName: !shippingDetails.lastName,
-      email: !shippingDetails.email || !/\S+@\S+\.\S+/.test(shippingDetails.email),
-      phone: !shippingDetails.phone || !/^\d{10}$/.test(shippingDetails.phone),
-      address1: !shippingDetails.address1,
-      city: !shippingDetails.city,
-      zipCode: !shippingDetails.zipCode,
+      firstName: !formValues.firstName,
+      lastName: !formValues.lastName,
+      email: !formValues.email,
+      phone: !formValues.phone,
+      address1: !formValues.address1,
+      city: !formValues.city,
+      zipCode: !formValues.zipCode,
     };
     setFormErrors(errors);
     return Object.values(errors).every((error) => !error);
@@ -69,6 +69,7 @@ const CheckoutPage = () => {
 
   const submitOrderToSanity = async (order: any) => {
     try {
+      console.log("Order being submitted to Sanity:", order);  // Log the order object
       const response = await client.create({
         _type: 'order',
         firstName: order.firstName,
@@ -78,7 +79,7 @@ const CheckoutPage = () => {
         address: order.address,
         city: order.city,
         zipCode: order.zipCode,
-        orderItems: order.orderItems,
+        orderItems: order.orderItems,  // Ensure these are references
         total: order.total,
         status: order.status,
       });
@@ -86,33 +87,39 @@ const CheckoutPage = () => {
       setOrderSuccess(true);
     } catch (error) {
       console.error("Error creating order:", error);
-      alert("There was an issue placing your order. Please try again.");
+      setOrderSuccess(false);
     }
   };
 
   const handleCheckoutSubmit = () => {
     if (validateForm()) {
       const order = {
-        firstName: shippingDetails.firstName,
-        lastName: shippingDetails.lastName,
-        email: shippingDetails.email,
-        phone: shippingDetails.phone,
-        address: shippingDetails.address1,
-        city: shippingDetails.city,
-        zipcode: shippingDetails.zipCode,
-        orderItems: products.map((product) => ({
+        firstName: formValues.firstName,
+        lastName: formValues.lastName,
+        email: formValues.email,
+        phone: formValues.phone,
+        address: formValues.address1,
+        city: formValues.city,
+        zipCode: formValues.zipCode,
+        orderItems: products.map((item, index) => ({
+          _key: `item-${index}-${Date.now()}`,  // Generate a unique key for each item
           _type: 'reference',
-          _ref: product.id,
+          _ref: item.id,  // Ensure the product.id corresponds to the Sanity food document ID
         })),
         total: totalAmount,
         status: 'pending',
       };
-
+  
+      // Log to ensure structure is correct before submitting
+      console.log("Order data with orderItems:", order);
+  
       submitOrderToSanity(order);
-
+  
+      // Clear the cart after successful submission
       localStorage.removeItem("cart");
-
-      setShippingDetails({
+  
+      // Reset form values after submission
+      setFormValues({
         firstName: "",
         lastName: "",
         email: "",
@@ -125,8 +132,8 @@ const CheckoutPage = () => {
       alert("Please fill out all fields correctly.");
     }
   };
-
-
+  
+  
   return (
     <div className="bg-gray-50 min-h-screen">
       <HeaderTwo />
@@ -179,9 +186,9 @@ const CheckoutPage = () => {
                       type="text"
                       id="firstName"
                       name="firstName"
-                      value={shippingDetails.firstName}
+                      value={formValues.firstName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-3 py-2 border ${formErrors.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500`}
                     />
                     {formErrors.firstName && (
                       <p className="text-red-500 text-sm">First name is required</p>
@@ -198,9 +205,9 @@ const CheckoutPage = () => {
                       type="text"
                       id="lastName"
                       name="lastName"
-                      value={shippingDetails.lastName}
+                      value={formValues.lastName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-3 py-2 border ${formErrors.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500`}
                     />
                     {formErrors.lastName && (
                       <p className="text-red-500 text-sm">Last name is required</p>
@@ -220,14 +227,12 @@ const CheckoutPage = () => {
                       type="email"
                       id="email"
                       name="email"
-                      value={shippingDetails.email}
+                      value={formValues.email}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-3 py-2 border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500`}
                     />
                     {formErrors.email && (
-                      <p className="text-red-500 text-sm">
-                        Please enter a valid email
-                      </p>
+                      <p className="text-red-500 text-sm">Please enter a valid email</p>
                     )}
                   </div>
                   <div>
@@ -241,14 +246,12 @@ const CheckoutPage = () => {
                       type="tel"
                       id="phone"
                       name="phone"
-                      value={shippingDetails.phone}
+                      value={formValues.phone}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-3 py-2 border ${formErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500`}
                     />
                     {formErrors.phone && (
-                      <p className="text-red-500 text-sm">
-                        Phone number should be 11 digits
-                      </p>
+                      <p className="text-red-500 text-sm">Phone number should be 11 digits</p>
                     )}
                   </div>
                 </div>
@@ -265,9 +268,9 @@ const CheckoutPage = () => {
                       type="text"
                       id="city"
                       name="city"
-                      value={shippingDetails.city}
+                      value={formValues.city}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-3 py-2 border ${formErrors.city ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500`}
                     />
                     {formErrors.city && (
                       <p className="text-red-500 text-sm">City is required</p>
@@ -284,9 +287,9 @@ const CheckoutPage = () => {
                       type="text"
                       id="zipCode"
                       name="zipCode"
-                      value={shippingDetails.zipCode}
+                      value={formValues.zipCode}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className={`w-full px-3 py-2 border ${formErrors.zipCode ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500`}
                     />
                     {formErrors.zipCode && (
                       <p className="text-red-500 text-sm">Zip code is required</p>
@@ -305,9 +308,9 @@ const CheckoutPage = () => {
                     type="text"
                     id="address1"
                     name="address1"
-                    value={shippingDetails.address1}
+                    value={formValues.address1}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className={`w-full px-3 py-2 border ${formErrors.address1 ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500`}
                   />
                   {formErrors.address1 && (
                     <p className="text-red-500 text-sm">Address is required</p>
@@ -317,47 +320,41 @@ const CheckoutPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:justify-between gap-4 pt-4">
-              <Link href={"/Cart"}>
-                <button className="py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 w-full sm:w-auto h-12 px-3">
-                  Back to cart
-                </button>
-              </Link>
-
               <button
-                className="w-full sm:w-auto mt-4 sm:mt-0 bg-orange-500 text-white px-6 py-3 rounded-md shadow-sm text-sm font-medium hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                type="button"
                 onClick={handleCheckoutSubmit}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
               >
-                Proceed to Shipping
+                Place Order
               </button>
-              {orderSuccess && <p className="text-green-500 mt-4">Order placed successfully!</p>}
             </div>
           </div>
 
           {/* Right Column - Order Summary */}
-          <div>
+          <div className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-            <div className="border rounded-lg p-4">
-              <div className="space-y-2">
-                {products.map((product) => (
-                  <div key={product.id} className="flex justify-between">
-                    <p className="text-sm">{product.name}</p>
-                    <p className="text-sm">${product.price * product.quantity}</p>
-                  </div>
-                ))}
-              </div>
-              <hr className="my-4" />
-              <div className="flex justify-between">
-                <p className="font-semibold">Subtotal</p>
-                <p className="font-semibold">${cartSubtotal}</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="font-semibold">Shipping</p>
-                <p className="font-semibold">${shippingCharge}</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-lg font-semibold">Total</p>
-                <p className="text-lg font-semibold">${totalAmount}</p>
-              </div>
+            <div className="space-y-4">
+              {products.map((product) => (
+                <div key={product.id} className="flex justify-between">
+                  <span>{product.name}</span>
+                  <span>
+                    {product.quantity} x ${product.price}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <hr className="my-4" />
+            <div className="flex justify-between">
+              <span className="font-semibold">Subtotal</span>
+              <span>${cartSubtotal}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold">Shipping</span>
+              <span>${shippingCharge}</span>
+            </div>
+            <div className="flex justify-between font-semibold text-xl">
+              <span>Total</span>
+              <span>${totalAmount}</span>
             </div>
           </div>
         </div>
